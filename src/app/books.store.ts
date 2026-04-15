@@ -2,8 +2,10 @@ import { setError, setPending, setSuccess, withRequestStatus } from '@/shared/co
 import { HttpClient } from '@angular/common/http';
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, debounceTime, distinctUntilChanged, of, pipe, switchMap, tap } from 'rxjs';
+import { booksApiEvents } from './books-api.events';
 
 export interface Book {
   key: string;
@@ -32,7 +34,7 @@ export const BooksStore = signalStore(
   withComputed(({ books }) => ({
     count: computed(() => books().length),
   })),
-  withMethods((store, http = inject(HttpClient)) => ({
+  withMethods((store, http = inject(HttpClient), dispatcher = inject(Dispatcher)) => ({
     updateQuery(query: string) {
       patchState(store, { query });
     },
@@ -53,6 +55,7 @@ export const BooksStore = signalStore(
           return http.get<{ docs: Book[] }>(url).pipe(
             tap((response) => {
               patchState(store, { books: response.docs }, setSuccess('search'));
+              dispatcher.dispatch(booksApiEvents.searchSuccess({ query, books: response.docs }));
             }),
             catchError(() => {
               patchState(store, setError('search', 'Failed to fetch books'));

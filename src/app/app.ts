@@ -7,6 +7,8 @@ import { CommonModule } from '@angular/common';
 import { Component, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BooksStore } from './books.store';
+import { HistoryStore } from './history.store';
+import { SearchHistoryComponent } from './search-history/search-history.component';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +21,7 @@ import { BooksStore } from './books.store';
     ZardCardComponent,
     ZardBadgeComponent,
     ZardSkeletonComponent,
+    SearchHistoryComponent,
   ],
   template: `
     <div class="min-h-screen bg-background text-foreground p-4 md:p-8 font-serif">
@@ -156,9 +159,9 @@ import { BooksStore } from './books.store';
         }
       </main>
 
-      <footer
-        class="mt-20 py-8 border-t border-border/50 text-center text-sm text-muted-foreground font-sans"
-      >
+      <app-search-history />
+
+      <footer>
         <p>Crafted for bibliophiles. Powered by Open Library API.</p>
       </footer>
     </div>
@@ -181,6 +184,7 @@ export class AppComponent {
   readonly store = inject(BooksStore);
 
   constructor() {
+    inject(HistoryStore); // ensure store is initialized and listening
     effect(() => {
       this.store.search(this.store.query());
     });
