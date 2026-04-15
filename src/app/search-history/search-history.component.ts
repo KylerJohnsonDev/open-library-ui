@@ -1,6 +1,7 @@
 import { ZardCardComponent } from '@/shared/components/card';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { BooksStore } from '../books.store';
 import { HistoryItem, HistoryStore } from '../history.store';
 
 @Component({
@@ -15,9 +16,10 @@ import { HistoryItem, HistoryStore } from '../history.store';
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (item of store.history(); track item.query) {
             <z-card
-              class="flex flex-col border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/40 transition-all hover:shadow-lg"
+              class="flex flex-col border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/40 transition-all hover:shadow-lg cursor-pointer"
               [zTitle]="item.query"
               [zDescription]="resultLabel(item)"
+              (click)="onCardClick(item)"
             >
               <ul class="space-y-2 mt-1">
                 @for (book of item.books.slice(0, 3); track book.key) {
@@ -66,6 +68,11 @@ import { HistoryItem, HistoryStore } from '../history.store';
 })
 export class SearchHistoryComponent {
   readonly store = inject(HistoryStore);
+  private readonly booksStore = inject(BooksStore);
+
+  onCardClick(item: HistoryItem): void {
+    this.booksStore.restoreFromHistory(item.query, item.books);
+  }
 
   resultLabel(item: HistoryItem): string {
     const count = item.books.length;

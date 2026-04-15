@@ -41,6 +41,9 @@ export const BooksStore = signalStore(
     clearSearch() {
       patchState(store, { query: '', books: [] }, setSuccess('search'));
     },
+    restoreFromHistory(query: string, books: Book[]) {
+      patchState(store, { query, books }, setSuccess('search'));
+    },
     search: rxMethod<string>(
       pipe(
         tap((query) => {
