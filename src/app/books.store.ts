@@ -1,9 +1,9 @@
-import { signalStore, withState, withMethods, patchState, withComputed } from '@ngrx/signals';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { inject, computed } from '@angular/core';
+import { setError, setPending, setSuccess, withRequestStatus } from '@/shared/core';
 import { HttpClient } from '@angular/common/http';
-import { pipe, switchMap, tap, catchError, of, distinctUntilChanged, debounceTime } from 'rxjs';
-import { withRequestStatus, setPending, setSuccess, setError } from '@/shared/core';
+import { computed, inject } from '@angular/core';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { catchError, debounceTime, distinctUntilChanged, of, pipe, switchMap, tap } from 'rxjs';
 
 export interface Book {
   key: string;
@@ -57,10 +57,10 @@ export const BooksStore = signalStore(
             catchError(() => {
               patchState(store, setError('search', 'Failed to fetch books'));
               return of({ docs: [] });
-            })
+            }),
           );
-        })
-      )
+        }),
+      ),
     ),
-  }))
+  })),
 );
