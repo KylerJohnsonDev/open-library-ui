@@ -4,7 +4,7 @@ import { ZardCardComponent } from '@/shared/components/card';
 import { ZardInputDirective } from '@/shared/components/input';
 import { ZardSkeletonComponent } from '@/shared/components/skeleton';
 import { CommonModule } from '@angular/common';
-import { Component, effect, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BooksStore } from './books.store';
 import { HistoryStore } from './history.store';
@@ -36,15 +36,40 @@ import { SearchHistoryComponent } from './search-history/search-history.componen
             z-input
             type="text"
             placeholder="Search for titles, authors, or subjects..."
-            class="w-full text-lg py-6 px-6 rounded-full border-2 border-border focus:border-primary transition-all shadow-sm"
+            class="w-full text-lg py-6 px-6 pr-28 rounded-full border-2 border-border focus:border-primary transition-all shadow-sm"
             [ngModel]="store.query()"
             (ngModelChange)="onQueryChange($event)"
+            (keydown.enter)="onSearch()"
           />
-          <div class="absolute right-3 top-1/2 -translate-y-1/2">
+          <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            @if (store.query()) {
+              <button
+                z-button
+                type="button"
+                zType="ghost"
+                class="rounded-full h-10 w-10 p-0 text-muted-foreground hover:text-foreground"
+                (click)="onClear()"
+              >
+                ✕
+              </button>
+            }
             @if (store.searchIsPending()) {
-              <div
-                class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"
-              ></div>
+              <div class="h-10 w-10 flex items-center justify-center">
+                <div
+                  class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"
+                ></div>
+              </div>
+            } @else {
+              <button
+                z-button
+                type="button"
+                zType="ghost"
+                class="rounded-full h-10 w-10 p-0"
+                [disabled]="!store.query().trim()"
+                (click)="onSearch()"
+              >
+                🔍
+              </button>
             }
           </div>
         </div>
@@ -185,12 +210,17 @@ export class AppComponent {
 
   constructor() {
     inject(HistoryStore); // ensure store is initialized and listening
-    effect(() => {
-      this.store.search(this.store.query());
-    });
   }
 
   onQueryChange(query: string) {
     this.store.updateQuery(query);
+  }
+
+  onSearch() {
+    this.store.search(this.store.query());
+  }
+
+  onClear() {
+    this.store.clearSearch();
   }
 }

@@ -4,7 +4,7 @@ import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { catchError, debounceTime, distinctUntilChanged, of, pipe, switchMap, tap } from 'rxjs';
+import { catchError, of, pipe, switchMap, tap } from 'rxjs';
 import { booksApiEvents } from './books-api.events';
 
 export interface Book {
@@ -38,10 +38,11 @@ export const BooksStore = signalStore(
     updateQuery(query: string) {
       patchState(store, { query });
     },
+    clearSearch() {
+      patchState(store, { query: '', books: [] }, setSuccess('search'));
+    },
     search: rxMethod<string>(
       pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
         tap((query) => {
           if (!query.trim()) {
             patchState(store, { books: [] }, setSuccess('search'));
