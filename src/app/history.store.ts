@@ -1,6 +1,7 @@
 import { signalStore, withState } from '@ngrx/signals';
 import { on, withReducer } from '@ngrx/signals/events';
 import { booksApiEvents } from './books-api.events';
+import { historyEvents } from './history.events';
 import { Book } from './books.store';
 
 export interface HistoryItem {
@@ -25,6 +26,9 @@ export const HistoryStore = signalStore(
       const newItem: HistoryItem = { query, books, searchedAt: new Date() };
       const deduped = state.history.filter((h) => h.query !== query);
       return { history: [newItem, ...deduped].slice(0, 6) };
+    }),
+    on(historyEvents.removeItem, ({ payload: { query } }, state) => {
+      return { history: state.history.filter((h) => h.query !== query) };
     }),
   ),
 );
