@@ -24,170 +24,183 @@ import { SearchHistoryComponent } from './search-history/search-history.componen
     SearchHistoryComponent,
   ],
   template: `
-    <div class="min-h-screen bg-background text-foreground p-4 md:p-8 font-serif">
-      <header class="max-w-6xl mx-auto mb-12 text-center">
-        <h1 class="text-5xl font-bold mb-4 text-primary tracking-tight">Athenaeum</h1>
-        <p class="text-muted-foreground text-lg italic">
-          Explore the boundless archives of Open Library
-        </p>
+    <div class="min-h-screen bg-background text-foreground flex flex-col font-serif">
+      <div class="flex-grow p-4 md:p-8">
+        <header class="max-w-6xl mx-auto mb-12 text-center">
+          <h1 class="text-5xl font-bold mb-4 text-primary tracking-tight">Athenaeum</h1>
+          <p class="text-muted-foreground text-lg italic">
+            Explore the boundless archives of Open Library
+          </p>
 
-        <div class="mt-8 max-w-2xl mx-auto relative group">
-          <input
-            z-input
-            type="text"
-            placeholder="Search for titles, authors, or subjects..."
-            class="w-full text-lg py-6 px-6 pr-28 rounded-full border-2 border-border focus:border-primary transition-all shadow-sm"
-            [ngModel]="store.query()"
-            (ngModelChange)="onQueryChange($event)"
-            (keydown.enter)="onSearch()"
-          />
-          <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            @if (store.query()) {
-              <button
-                z-button
-                type="button"
-                zType="ghost"
-                class="rounded-full h-10 w-10 p-0 text-muted-foreground hover:text-foreground"
-                (click)="onClear()"
-              >
-                ✕
-              </button>
-            }
-            @if (store.searchIsPending()) {
-              <div class="h-10 w-10 flex items-center justify-center">
-                <div
-                  class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"
-                ></div>
+          <div class="mt-8 max-w-2xl mx-auto relative group">
+            <input
+              z-input
+              type="text"
+              placeholder="Search for titles, authors, or subjects..."
+              class="w-full text-lg py-6 px-6 pr-28 rounded-full border-2 border-border focus:border-primary transition-all shadow-sm"
+              [ngModel]="store.query()"
+              (ngModelChange)="onQueryChange($event)"
+              (keydown.enter)="onSearch()"
+            />
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              @if (store.query()) {
+                <button
+                  z-button
+                  type="button"
+                  zType="ghost"
+                  class="rounded-full h-10 w-10 p-0 text-muted-foreground hover:text-foreground"
+                  (click)="onClear()"
+                >
+                  ✕
+                </button>
+              }
+              @if (store.searchIsPending()) {
+                <div class="h-10 w-10 flex items-center justify-center">
+                  <div
+                    class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"
+                  ></div>
+                </div>
+              } @else {
+                <button
+                  z-button
+                  type="button"
+                  zType="ghost"
+                  class="rounded-full h-10 w-10 p-0"
+                  [disabled]="!store.query().trim()"
+                  (click)="onSearch()"
+                >
+                  🔍
+                </button>
+              }
+            </div>
+          </div>
+        </header>
+
+        <main class="max-w-6xl mx-auto">
+          @if (store.searchIsError()) {
+            <div
+              class="p-4 mb-6 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-center"
+            >
+              {{ store.searchRequestError() }}
+            </div>
+          }
+
+          @if (store.searchIsPending() && store.books().length === 0) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+                <z-card class="h-[400px] flex flex-col p-0 overflow-hidden">
+                  <z-skeleton class="h-48 w-full" />
+                  <div class="p-4 space-y-3">
+                    <z-skeleton class="h-6 w-3/4" />
+                    <z-skeleton class="h-4 w-1/2" />
+                    <z-skeleton class="h-20 w-full" />
+                  </div>
+                </z-card>
+              }
+            </div>
+          } @else if (store.books().length > 0) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              @for (book of store.books(); track book.key) {
+                <z-card
+                  class="group flex flex-col h-full overflow-hidden border-border/50 hover:border-primary/50 transition-all hover:shadow-xl bg-card/50 backdrop-blur-sm"
+                >
+                  <div
+                    class="relative h-64 overflow-hidden bg-muted flex items-center justify-center"
+                  >
+                    @if (book.cover_i) {
+                      <img
+                        [src]="'https://covers.openlibrary.org/b/id/' + book.cover_i + '-M.jpg'"
+                        [alt]="book.title"
+                        class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                      />
+                    } @else {
+                      <div class="text-muted-foreground flex flex-col items-center p-4 text-center">
+                        <span class="text-4xl mb-2">📖</span>
+                        <span class="text-xs uppercase tracking-widest">No Cover Available</span>
+                      </div>
+                    }
+                    <div class="absolute top-2 right-2">
+                      <z-badge variant="secondary" class="bg-background/80 backdrop-blur-md">
+                        {{ book.first_publish_year || 'N/A' }}
+                      </z-badge>
+                    </div>
+                  </div>
+
+                  <div class="p-6 flex-grow flex flex-col">
+                    <h3
+                      class="text-xl font-bold mb-2 line-clamp-2 group-hover:text-primary transition-colors"
+                    >
+                      {{ book.title }}
+                    </h3>
+                    <p class="text-sm text-muted-foreground mb-4 font-sans italic">
+                      {{ book.author_name ? book.author_name.join(', ') : 'Unknown Author' }}
+                    </p>
+
+                    @if (book.subject) {
+                      <div class="flex flex-wrap gap-1 mt-auto">
+                        @for (sub of book.subject.slice(0, 3); track sub) {
+                          <z-badge
+                            variant="outline"
+                            class="text-[10px] px-2 py-0 border-primary/20 text-primary/70"
+                          >
+                            {{ sub }}
+                          </z-badge>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <div class="p-4 pt-0 mt-auto">
+                    <a
+                      [href]="'https://openlibrary.org' + book.key"
+                      target="_blank"
+                      z-button
+                      variant="outline"
+                      class="w-full rounded-lg hover:bg-primary hover:text-primary-foreground border-primary/20"
+                    >
+                      View Details
+                    </a>
+                  </div>
+                </z-card>
+              }
+            </div>
+          } @else if (store.searchIsSuccess() && store.query()) {
+            <div
+              class="text-center py-20 bg-card/30 rounded-3xl border-2 border-dashed border-border/50"
+            >
+              <span class="text-6xl mb-4 block">🕯️</span>
+              <p class="text-xl text-muted-foreground">No manuscripts found for your search.</p>
+            </div>
+          } @else {
+            <div class="text-center py-20">
+              <div class="inline-block p-8 rounded-full bg-primary/5 mb-6">
+                <span class="text-7xl">📜</span>
               </div>
-            } @else {
-              <button
-                z-button
-                type="button"
-                zType="ghost"
-                class="rounded-full h-10 w-10 p-0"
-                [disabled]="!store.query().trim()"
-                (click)="onSearch()"
-              >
-                🔍
-              </button>
-            }
+              <h2 class="text-2xl font-semibold mb-2">Begin Your Journey</h2>
+              <p class="text-muted-foreground max-w-md mx-auto">
+                Enter a title, author, or secret keyword to uncover hidden treasures from the Open
+                Library collection.
+              </p>
+            </div>
+          }
+        </main>
+
+        <app-search-history />
+      </div>
+
+      <footer class="mt-auto py-10 border-t-2 border-border bg-card/10 backdrop-blur-sm">
+        <div
+          class="max-w-6xl mx-auto px-4 md:px-8 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground"
+        >
+          <div class="flex flex-col items-center md:items-start gap-1">
+            <p class="font-bold text-foreground tracking-tight underline decoration-primary/30 decoration-2 underline-offset-4">Athenaeum</p>
+            <p>Crafted for bibliophiles with passion.</p>
+          </div>
+          <div class="flex flex-col items-center md:items-end gap-1">
+            <p>Powered by the Open Library API.</p>
+            <p class="text-[10px] uppercase tracking-widest opacity-70">Knowledge belongs to all.</p>
           </div>
         </div>
-      </header>
-
-      <main class="max-w-6xl mx-auto">
-        @if (store.searchIsError()) {
-          <div
-            class="p-4 mb-6 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-center"
-          >
-            {{ store.searchRequestError() }}
-          </div>
-        }
-
-        @if (store.searchIsPending() && store.books().length === 0) {
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-              <z-card class="h-[400px] flex flex-col p-0 overflow-hidden">
-                <z-skeleton class="h-48 w-full" />
-                <div class="p-4 space-y-3">
-                  <z-skeleton class="h-6 w-3/4" />
-                  <z-skeleton class="h-4 w-1/2" />
-                  <z-skeleton class="h-20 w-full" />
-                </div>
-              </z-card>
-            }
-          </div>
-        } @else if (store.books().length > 0) {
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            @for (book of store.books(); track book.key) {
-              <z-card
-                class="group flex flex-col h-full overflow-hidden border-border/50 hover:border-primary/50 transition-all hover:shadow-xl bg-card/50 backdrop-blur-sm"
-              >
-                <div
-                  class="relative h-64 overflow-hidden bg-muted flex items-center justify-center"
-                >
-                  @if (book.cover_i) {
-                    <img
-                      [src]="'https://covers.openlibrary.org/b/id/' + book.cover_i + '-M.jpg'"
-                      [alt]="book.title"
-                      class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                    />
-                  } @else {
-                    <div class="text-muted-foreground flex flex-col items-center p-4 text-center">
-                      <span class="text-4xl mb-2">📖</span>
-                      <span class="text-xs uppercase tracking-widest">No Cover Available</span>
-                    </div>
-                  }
-                  <div class="absolute top-2 right-2">
-                    <z-badge variant="secondary" class="bg-background/80 backdrop-blur-md">
-                      {{ book.first_publish_year || 'N/A' }}
-                    </z-badge>
-                  </div>
-                </div>
-
-                <div class="p-6 flex-grow flex flex-col">
-                  <h3
-                    class="text-xl font-bold mb-2 line-clamp-2 group-hover:text-primary transition-colors"
-                  >
-                    {{ book.title }}
-                  </h3>
-                  <p class="text-sm text-muted-foreground mb-4 font-sans italic">
-                    {{ book.author_name ? book.author_name.join(', ') : 'Unknown Author' }}
-                  </p>
-
-                  @if (book.subject) {
-                    <div class="flex flex-wrap gap-1 mt-auto">
-                      @for (sub of book.subject.slice(0, 3); track sub) {
-                        <z-badge
-                          variant="outline"
-                          class="text-[10px] px-2 py-0 border-primary/20 text-primary/70"
-                        >
-                          {{ sub }}
-                        </z-badge>
-                      }
-                    </div>
-                  }
-                </div>
-
-                <div class="p-4 pt-0 mt-auto">
-                  <a
-                    [href]="'https://openlibrary.org' + book.key"
-                    target="_blank"
-                    z-button
-                    variant="outline"
-                    class="w-full rounded-lg hover:bg-primary hover:text-primary-foreground border-primary/20"
-                  >
-                    View Details
-                  </a>
-                </div>
-              </z-card>
-            }
-          </div>
-        } @else if (!store.searchIsPending() && store.query()) {
-          <div
-            class="text-center py-20 bg-card/30 rounded-3xl border-2 border-dashed border-border/50"
-          >
-            <span class="text-6xl mb-4 block">🕯️</span>
-            <p class="text-xl text-muted-foreground">No manuscripts found for your search.</p>
-          </div>
-        } @else {
-          <div class="text-center py-20">
-            <div class="inline-block p-8 rounded-full bg-primary/5 mb-6">
-              <span class="text-7xl">📜</span>
-            </div>
-            <h2 class="text-2xl font-semibold mb-2">Begin Your Journey</h2>
-            <p class="text-muted-foreground max-w-md mx-auto">
-              Enter a title, author, or secret keyword to uncover hidden treasures from the Open
-              Library collection.
-            </p>
-          </div>
-        }
-      </main>
-
-      <app-search-history />
-
-      <footer>
-        <p>Crafted for bibliophiles. Powered by Open Library API.</p>
       </footer>
     </div>
   `,

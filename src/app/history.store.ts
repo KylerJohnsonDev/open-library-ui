@@ -24,7 +24,7 @@ export const HistoryStore = signalStore(
     on(booksApiEvents.searchSuccess, ({ payload: { query, books } }, state) => {
       const newItem: HistoryItem = { query, books, searchedAt: new Date() };
       const deduped = state.history.filter((h) => h.query !== query);
-      return { history: [newItem, ...deduped].slice(0, 5) };
+      return { history: [newItem, ...deduped].slice(0, 6) };
     }),
   ),
 );

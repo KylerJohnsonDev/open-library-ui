@@ -36,7 +36,7 @@ export const BooksStore = signalStore(
   })),
   withMethods((store, http = inject(HttpClient), dispatcher = inject(Dispatcher)) => ({
     updateQuery(query: string) {
-      patchState(store, { query });
+      patchState(store, { query, searchRequestStatus: 'idle' });
     },
     clearSearch() {
       patchState(store, { query: '', books: [] }, setSuccess('search'));
