@@ -4,9 +4,9 @@ import { ZardCardComponent } from '@/shared/components/card';
 import { ZardInputDirective } from '@/shared/components/input';
 import { ZardSkeletonComponent } from '@/shared/components/skeleton';
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { BooksStore } from './books.store';
+import { BooksStore, Book } from './books.store';
 import { HistoryStore } from './history.store';
 import { SearchHistoryComponent } from './search-history/search-history.component';
 
@@ -26,7 +26,21 @@ import { SearchHistoryComponent } from './search-history/search-history.componen
   template: `
     <div class="min-h-screen bg-background text-foreground flex flex-col font-serif">
       <div class="flex-grow p-4 md:p-8">
-        <header class="max-w-6xl mx-auto mb-12 text-center">
+        <header class="max-w-6xl mx-auto mb-12 text-center relative">
+          @if (store.shareStatus() === 'copied') {
+            <div
+              class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-sans shadow-lg animate-in fade-in slide-in-from-top-2 duration-300 z-50"
+            >
+              Link copied to clipboard! 📋
+            </div>
+          }
+          @if (store.isRestoring()) {
+            <div
+              class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-secondary text-secondary-foreground rounded-full text-sm font-sans shadow-lg animate-in fade-in slide-in-from-top-2 duration-300 z-50"
+            >
+              Restoring shared search... 🏺
+            </div>
+          }
           <h1 class="text-5xl font-bold mb-4 text-primary tracking-tight">Athenaeum</h1>
           <p class="text-muted-foreground text-lg italic">
             Explore the boundless archives of Open Library
@@ -99,6 +113,24 @@ import { SearchHistoryComponent } from './search-history/search-history.componen
               }
             </div>
           } @else if (store.books().length > 0) {
+            <div class="flex flex-col md:flex-row justify-between items-end md:items-center mb-8 gap-4">
+              <div>
+                <h2 class="text-3xl font-bold text-primary tracking-tight">Search Results</h2>
+                <p class="text-muted-foreground italic">
+                  Found {{ store.count() }} scrolls in the archives
+                </p>
+              </div>
+              <button
+                z-button
+                zType="outline"
+                class="rounded-full px-6 py-5 border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all font-sans group"
+                (click)="onShare()"
+              >
+                <span class="mr-2 group-hover:scale-110 transition-transform">🔗</span>
+                Share Search Results
+              </button>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               @for (book of store.books(); track book.key) {
                 <z-card
@@ -218,11 +250,23 @@ import { SearchHistoryComponent } from './search-history/search-history.componen
     `,
   ],
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   readonly store = inject(BooksStore);
 
   constructor() {
     inject(HistoryStore); // ensure store is initialized and listening
+  }
+
+  ngOnInit() {
+    const params = new URLSearchParams(window.location.search);
+    const shared = params.get('share');
+    if (shared) {
+      this.store.restoreFromSharedToken(shared);
+    }
+  }
+
+  onShare() {
+    this.store.shareResults();
   }
 
   onQueryChange(query: string) {
